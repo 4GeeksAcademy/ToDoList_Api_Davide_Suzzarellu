@@ -177,10 +177,10 @@ export const App = () => {
     }, []);
 
     return (
-        <main className="container d-flex flex-row gap-2 vh-100 justify-content-center align-items-center">
+        <main className="container row d-flex flex-row gap-2 vh-100 justify-content-center align-items-center">
             <form
                 id="formUsers"
-                className="col-auto border border-success p-4 rounded"
+                className="col-lg-4 col-md-6 col-sm-8 border border-success p-4 rounded"
                 onSubmit={handleSubmit}
             >
                 <header className="d-flex justify-content-center align-items-center">
@@ -227,7 +227,7 @@ export const App = () => {
 
             <form
                 id="formTareas"
-                className="col-auto border border-success p-4 rounded"
+                className="col-lg-4 col-md-6 col-sm-8 border border-success p-4 rounded"
                 onSubmit={handleSubmitTask}
             >
                 <header className="d-flex justify-content-center align-items-center">
