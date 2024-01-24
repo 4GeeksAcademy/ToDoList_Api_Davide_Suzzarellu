@@ -7,22 +7,27 @@ export const App = () => {
     const [input, setInput] = useState("");
     const [tareas, setTareas] = useState([]);
     const [newTask, setNewTask] = useState("")
-    const [checkbox, setCheckbox] = useState([])
 
-    const handleCheckboxChange = (event, tareas) => {
-    }
-
-
-    const handleCancel = async (index) => {
+    const handleCancel = (index) => {
         const user = users.splice(index, 1);
         deleteUser(user);
         setUsers([...users]);
         setTareas([])
     };
 
+
+    const handleCancelTask = (id) => {
+        const updatedTareas = tareas.filter(tarea => tarea.id !== id);
+        deleteTask(selectedUser, updatedTareas);
+        setTareas(updatedTareas);
+    };
+
+
     const handleChangeNewTask = (event) => {
         setNewTask(event.target.value)
     }
+
+
     const handleChange = (event) => {
         setInput(event.target.value);
     };
@@ -37,6 +42,7 @@ export const App = () => {
             console.log(tareas)
         }
     };
+
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -102,6 +108,30 @@ export const App = () => {
             console.log("Error: ", response.status, response.statusText);
             return response.status;
         }
+        setSelectedUser(null)
+    };
+
+
+    const deleteTask = async (user, updatedTareas) => {
+        const url = `${urlBase}/${user}`;
+        const dataToSend = updatedTareas;
+        const opciones = {
+            method: "PUT",
+            body: JSON.stringify(dataToSend),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        };
+
+        const response = await fetch(url, opciones);
+
+        if (!response.ok) {
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
+        }
+        await response.json();
+        console.log(`Tareas actualizadas correctamente`);
+        getTareas(user)
     };
 
 
@@ -117,6 +147,7 @@ export const App = () => {
         setTareas(data);
         console.log("Tareas obtenidas correctamente");
     };
+
 
     const putTareas = async (user, newTask) => {
         const dataToSend = [...tareas, newTask]
@@ -140,11 +171,6 @@ export const App = () => {
         console.log(`Tareas actualizadas correctamente`);
         getTareas(user)
     };
-
-
-
-
-
 
     useEffect(() => {
         getUsers();
@@ -209,7 +235,7 @@ export const App = () => {
                 </header>
 
                 <ul className="d-flex flex-column justify-content-center align-items-center list-group w-100 mt-2 mx-0  rounded">
-                    <li className={`list-group w-100 ${selectedUser == null || users.length === 0 ? "d-none" : ""}`}>
+                    <li className={`list-group w-100 ${!selectedUser ? "d-none" : ""}`}>
                         <input
                             type="text"
                             value={newTask}
@@ -218,7 +244,7 @@ export const App = () => {
                             placeholder="Escribe una nueva tarea:"
                         ></input>
                     </li>
-                    {users.length === 0 || selectedUser == null ? (
+                    {users.length === 0 || (!selectedUser) ? (
                         <p>No hay tareas creadas</p>
                     ) : (
                         tareas
@@ -226,21 +252,21 @@ export const App = () => {
                             .map((tarea) => (
                                 <li
                                     key={tarea.id}
-                                    className="list-group-item border w-100  p-2 d-flexflex-column gap-2 justify-content-center "
+                                    className="list-group-item border w-100 p-2 d-flex flex-row justify-content-between align-items-center"
                                 >
-                                    <input
-                                        className="form-check-input me-2"
-                                        type="checkbox"
-                                        id={tarea.id}
-                                    //    checked={tarea.done[tarea.id]}
-                                    //  onChange={() => handleCheckboxChange(tarea.done)}
-                                    />
                                     <label
-                                        className="form-check-label"
+                                        className="form-check-label w-100 d-flex justify-content-start"
                                         htmlFor={tarea.id}
                                     >
                                         {tarea.label}
                                     </label>
+                                    <button
+                                        onClick={() => handleCancelTask(tarea.id)}
+                                        type="button"
+                                        className="d-flex justify-content-center align-items-center text-danger border-0 bg-white"
+                                    >
+                                        <i className="fa-solid fa-trash"></i>
+                                    </button>
                                 </li>
                             ))
                     )}
