@@ -1,97 +1,164 @@
 import React, { useEffect, useState } from "react";
 
 export const App = () => {
-    const [tareas, setTareas] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState();
     const urlBase = "https://playground.4geeks.com/apis/fake/todos/user";
-    const [input, setInput] = useState("")
+    const [input, setInput] = useState("");
+    const [tareas, setTareas] = useState([]);
+    const [newTask, setNewTask] = useState("")
+    const [checkbox, setCheckbox] = useState([])
+
+    const handleCheckboxChange = (event, tareas) => {
+    }
 
 
+    const handleCancel = async (index) => {
+        const user = users.splice(index, 1);
+        deleteUser(user);
+        setUsers([...users]);
+        setTareas([])
+    };
+
+    const handleChangeNewTask = (event) => {
+        setNewTask(event.target.value)
+    }
     const handleChange = (event) => {
         setInput(event.target.value);
     };
 
 
-    const handleSubmit = async (event) => {
+    const handleSubmitTask = (event) => {
+        event.preventDefault();
+        if (newTask.trim() !== "") {
+            const task = { label: newTask, done: false }
+            putTareas(selectedUser, task)
+            setNewTask("");
+            console.log(tareas)
+        }
+    };
+
+    const handleSubmit = (event) => {
         event.preventDefault();
         if (input.trim() !== "") {
-            await postTarea(input);
+            setSelectedUser(input)
+            postUser(input);
             setInput("");
         }
     };
 
-    const handleCancel = async (index) => {
-        const tarea = tareas.splice(index, 1);
-        await deleteTarea(tarea)
-        setTareas([...tareas]);
-    }
 
-    const handleCancelAll = async () => {
-        setTareas([]);
+    const handleUserClick = async (user) => {
+        if (selectedUser !== user) {
+            setSelectedUser(user);
+            getTareas(user);
+        }
     };
 
 
-    const getTareas = async () => {
+    const getUsers = async () => {
         const options = {};
         const response = await fetch(urlBase, options);
         if (!response.ok) {
-            console.log('Error: ', response.status, response.statusText);
-            return response.status
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
         }
         const data = await response.json();
-        console.log(data)
-        setTareas(data);
+        setUsers(data);
     };
 
 
-    const postTarea = async (tarea) => {
-        const url = `${urlBase}/${tarea}`;
+    const postUser = async (user) => {
+        const url = `${urlBase}/${user}`;
         const options = {
-            method: 'POST',
+            method: "POST",
             body: JSON.stringify([]),
             headers: {
-                'Content-Type': 'application/json'
-            }
+                "Content-Type": "application/json",
+            },
         };
         const response = await fetch(url, options);
         if (!response.ok) {
-            console.log('Error: ', response.status, response.statusText);
-            return response.status
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
+        }
+        const data = await response.json();
+        console.log(`User '${user}' agregado correctamente`);
+        getUsers();
+        getTareas(user);
+    };
+
+
+    const deleteUser = async (user) => {
+        const url = `${urlBase}/${user}`;
+        const options = {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        };
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
+        }
+    };
+
+
+    const getTareas = async (user) => {
+        const url = `${urlBase}/${user}`;
+        const options = {};
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
+        }
+        const data = await response.json();
+        setTareas(data);
+        console.log("Tareas obtenidas correctamente");
+    };
+
+    const putTareas = async (user, newTask) => {
+        const dataToSend = [...tareas, newTask]
+        const url = `${urlBase}/${user}`;
+
+        const opciones = {
+            method: "PUT",
+            body: JSON.stringify(dataToSend),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        };
+
+        const response = await fetch(url, opciones);
+        console.log("PUT response:", response);
+        if (!response.ok) {
+            console.log("Error: ", response.status, response.statusText);
+            return response.status;
         }
         await response.json();
-        setTareas([...tareas, tarea]);
-        console.log(`Tarea '${tarea}' agregada correctamente`);
-
+        console.log(`Tareas actualizadas correctamente`);
+        getTareas(user)
     };
 
 
 
 
-    const deleteTarea = async (tarea) => {
-        const url = `${urlBase}/${tarea}`
-        const options = {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }
-        const response = await fetch(url, options)
-        if (!response.ok) {
-            console.log('Error: ', response.status, response.statusText)
-            return response.status
-        }
-    }
 
 
     useEffect(() => {
-        getTareas();
+        getUsers();
     }, []);
 
     return (
-        <main className="container d-flex flex-column vh-100 justify-content-center align-items-center">
-            <form id="form" className="col-auto border border-success p-4 rounded" onSubmit={handleSubmit}>
-
+        <main className="container d-flex flex-row gap-2 vh-100 justify-content-center align-items-center">
+            <form
+                id="formUsers"
+                className="col-auto border border-success p-4 rounded"
+                onSubmit={handleSubmit}
+            >
                 <header className="d-flex justify-content-center align-items-center">
-                    <h1 className="px-5">To Do List</h1>
+                    <h1 className="px-5">Usuarios</h1>
                 </header>
 
                 <ul className="d-flex flex-column list-group w-100 mt-2 mx-0 border rounded">
@@ -101,29 +168,84 @@ export const App = () => {
                             value={input}
                             className="w-100 p-2"
                             onChange={handleChange}
-                            placeholder={tareas.length == 0 ? "Escribe la primera tarea:" : "Escribe una tarea:"}>
-                        </input>
+                            placeholder="Crea un nuevo usuario:"
+                        ></input>
                     </li>
-                    {tareas.map((tarea, index) =>
-                    (<li key={index} className="list-group-item border p-2 d-flex justify-content-between ">
-                        {tarea}
-                        <button
-                            onClick={() => handleCancel(index)}
-                            type="button"
-                            className="d-flex justify-content-center align-items-center text-danger border-0  bg-white">
-                            <i className="fa-solid fa-trash"></i>
-                        </button>
-                    </li>)
-                    )}
+                    {users.map((user, index) => (
+                        <li
+                            key={index}
+                            className={`list-group-item border p-2 d-flex justify-content-between ${selectedUser === user ? "active" : ""}`}
+                            onClick={() => handleUserClick(user)}
+                        >
+                            {user}
+                            <button
+                                onClick={() => handleCancel(index)}
+                                type="button"
+                                className={`d-flex justify-content-center align-items-center text-danger border-0 ${selectedUser === user ? "bg-primary" : "bg-white"}`}
+                            >
+                                <i className="fa-solid fa-trash"></i>
+                            </button>
+                        </li>
+                    ))}
                 </ul>
                 <footer className="mt-2">
                     <small>
-                        {tareas.length == 0 ? "No hay tareas disponibles" : tareas.length == 1 ? tareas.length + " tarea disponible" : tareas.length + " tareas disponibles"}
+                        {users.length === 0
+                            ? "No hay usuarios disponibles"
+                            : users.length === 1
+                                ? users.length + " usuario disponible"
+                                : users.length + " usuarios disponibles"}
                     </small>
                 </footer>
             </form>
-            <button onClick={() => handleCancelAll()} className="btn btn-danger mt-4 p-2">Elimina todas las tareas!</button>
-        </main>
-    )
-}
 
+            <form
+                id="formTareas"
+                className="col-auto border border-success p-4 rounded"
+                onSubmit={handleSubmitTask}
+            >
+                <header className="d-flex justify-content-center align-items-center">
+                    <h1 className="px-5">Tareas</h1>
+                </header>
+
+                <ul className="d-flex flex-column justify-content-center align-items-center list-group w-100 mt-2 mx-0  rounded">
+                    <li className={`list-group w-100 ${selectedUser == null || users.length === 0 ? "d-none" : ""}`}>
+                        <input
+                            type="text"
+                            value={newTask}
+                            className="w-100 p-2"
+                            onChange={handleChangeNewTask}
+                            placeholder="Escribe una nueva tarea:"
+                        ></input>
+                    </li>
+                    {users.length === 0 || selectedUser == null ? (
+                        <p>No hay tareas creadas</p>
+                    ) : (
+                        tareas
+                            .filter((tarea) => tarea.label !== "example task")
+                            .map((tarea) => (
+                                <li
+                                    key={tarea.id}
+                                    className="list-group-item border w-100  p-2 d-flexflex-column gap-2 justify-content-center "
+                                >
+                                    <input
+                                        className="form-check-input me-2"
+                                        type="checkbox"
+                                        id={tarea.id}
+                                    //    checked={tarea.done[tarea.id]}
+                                    //  onChange={() => handleCheckboxChange(tarea.done)}
+                                    />
+                                    <label
+                                        className="form-check-label"
+                                        htmlFor={tarea.id}
+                                    >
+                                        {tarea.label}
+                                    </label>
+                                </li>
+                            ))
+                    )}
+                </ul>
+            </form>
+        </main>
+    );
+};
